@@ -6,10 +6,12 @@ import { bindActionCreators } from 'redux';
 import { booksLoaded } from '../store/actions/books';
 import { loading } from '../store/actions/global';
 import BooksController from '../controllers/BooksController';
-import Adhyan from '../core/Adhyan';
+import Adhyan, { CONTROLLERS } from '../core/Adhyan';
 import { AppContext } from '../providers/AppProvider';
+import { BookInterface, UserInterface } from '../interfaces';
 
 type PropsType = {
+  user: UserInterface;
   actions: {
     booksLoaded: (books: BookInterface[]) => null;
     loading: (status: boolean) => null;
@@ -18,7 +20,6 @@ type PropsType = {
     items: BookInterface[];
   };
 };
-
 const getColorOfStatus = status => {
   const obj = {
     processed: 'green',
@@ -83,12 +84,14 @@ class Books extends React.Component<PropsType> {
 
   constructor(props: PropsType, context: Context<Adhyan>) {
     super(props, context);
-    this.controller = this.context.createController('books');
+    this.controller = this.context.createController(CONTROLLERS.BOOKS);
   }
   async componentWillMount() {
     this.props.actions.loading(true);
     // @todo handle error
-    const books: BookInterface[] = await this.controller.getBooks();
+    const books: BookInterface[] = await this.controller.getBooks(
+      this.props.user.uid,
+    );
     this.props.actions.booksLoaded(books);
     this.props.actions.loading(false);
   }
@@ -102,8 +105,9 @@ class Books extends React.Component<PropsType> {
 }
 
 // const
-const mapStateToProps = ({ books }) => ({
+const mapStateToProps = ({ books, user }) => ({
   books,
+  user,
 });
 const mapActions = dispatch => ({
   actions: bindActionCreators({ booksLoaded, loading }, dispatch),
